@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/a8m/envsubst/parse"
+	"github.com/matt4biz/envsubst/parse"
 )
 
 // String returns the parsed template string after processing it.
