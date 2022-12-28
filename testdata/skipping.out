@@ -1,0 +1,5 @@
+foo: bar
+baz: baz
+env: dev
+host: localhost
+not: ${NOTSET}

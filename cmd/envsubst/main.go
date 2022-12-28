@@ -8,7 +8,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/a8m/envsubst/parse"
+	"github.com/matt4biz/envsubst/parse"
 )
 
 var (
@@ -17,6 +17,7 @@ var (
 	noDigit  = flag.Bool("no-digit", false, "")
 	noUnset  = flag.Bool("no-unset", false, "")
 	noEmpty  = flag.Bool("no-empty", false, "")
+	noFail   = flag.Bool("no-fail", true, "")
 	failFast = flag.Bool("fail-fast", false, "")
 )
 
@@ -28,6 +29,7 @@ Options:
   -no-digit  Do not replace variables starting with a digit. e.g. $1 and ${1}
   -no-unset  Fail if a variable is not set.
   -no-empty  Fail if a variable is set but empty.
+  -no-fail   Do not fail or report an error if a variable is unset.
   -fail-fast Fail on first error otherwise display all failures if restrictions are set.
 `
 
@@ -36,6 +38,9 @@ func main() {
 		fmt.Fprint(os.Stderr, fmt.Sprintf(usage))
 	}
 	flag.Parse()
+	if *noFail && *noUnset {
+		usageAndExit(fmt.Sprintf("Cannot use -no-unset and -no-fail together."))
+	}
 	var reader *bufio.Reader
 	if *input != "" {
 		file, err := os.Open(*input)
@@ -71,7 +76,7 @@ func main() {
 	if *output != "" {
 		file, err = os.Create(*output)
 		if err != nil {
-			usageAndExit("Error to create the wanted output file.")
+			usageAndExit("Failed to create the wanted output file.")
 		}
 	} else {
 		file = os.Stdout
@@ -81,8 +86,9 @@ func main() {
 	if *failFast {
 		parserMode = parse.Quick
 	}
-	restrictions := &parse.Restrictions{*noUnset, *noEmpty, *noDigit}
-	result, err := (&parse.Parser{Name: "string", Env: os.Environ(), Restrict: restrictions, Mode: parserMode}).Parse(data)
+	restrictions := parse.Restrictions{*noUnset, *noEmpty, *noDigit, *noFail}
+	parser := parse.Parser{Name: "string", Env: os.Environ(), Restrict: &restrictions, Mode: parserMode}
+	result, err := parser.Parse(data)
 	if err != nil {
 		errorAndExit(err)
 	}

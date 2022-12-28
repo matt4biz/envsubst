@@ -18,13 +18,13 @@ func String(s string) (string, error) {
 // an error describing the failure.
 // Errors on first failure or returns a collection of failures if failOnFirst is false
 func StringRestricted(s string, noUnset, noEmpty bool) (string, error) {
-	return StringRestrictedNoDigit(s, noUnset, noEmpty , false)
+	return StringRestrictedNoDigit(s, noUnset, noEmpty, false)
 }
 
 // Like StringRestricted but additionally allows to ignore env variables which start with a digit.
 func StringRestrictedNoDigit(s string, noUnset, noEmpty bool, noDigit bool) (string, error) {
 	return parse.New("string", os.Environ(),
-		&parse.Restrictions{noUnset, noEmpty, noDigit}).Parse(s)
+		&parse.Restrictions{noUnset, noEmpty, noDigit, false}).Parse(s)
 }
 
 // Bytes returns the bytes represented by the parsed template after processing it.
@@ -43,7 +43,7 @@ func BytesRestricted(b []byte, noUnset, noEmpty bool) ([]byte, error) {
 // Like BytesRestricted but additionally allows to ignore env variables which start with a digit.
 func BytesRestrictedNoDigit(b []byte, noUnset, noEmpty bool, noDigit bool) ([]byte, error) {
 	s, err := parse.New("bytes", os.Environ(),
-		&parse.Restrictions{noUnset, noEmpty, noDigit}).Parse(string(b))
+		&parse.Restrictions{noUnset, noEmpty, noDigit, false}).Parse(string(b))
 	if err != nil {
 		return nil, err
 	}
@@ -71,4 +71,17 @@ func ReadFileRestrictedNoDigit(filename string, noUnset, noEmpty bool, noDigit b
 		return nil, err
 	}
 	return BytesRestrictedNoDigit(b, noUnset, noEmpty, noDigit)
+}
+
+func ReadFileSkipping(filename string) ([]byte, error) {
+	b, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	restrict := parse.Restrictions{NoFail: true}
+	s, err := parse.New("file", os.Environ(), &restrict).Parse(string(b))
+	if err != nil {
+		return nil, err
+	}
+	return []byte(s), nil
 }

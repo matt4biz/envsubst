@@ -24,6 +24,8 @@ const (
 	NodeVariable
 )
 
+const varFormat = "${%s}"
+
 type TextNode struct {
 	NodeType
 	Text string
@@ -52,6 +54,9 @@ func (t *VariableNode) String() (string, error) {
 	if err := t.validateNoUnset(); err != nil {
 		return "", err
 	}
+	if !t.isSet() && t.Restrict.NoFail {
+		return t.makeVar(), nil
+	}
 	value := t.Env.Get(t.Ident)
 	if err := t.validateNoEmpty(value); err != nil {
 		return "", err
@@ -61,6 +66,10 @@ func (t *VariableNode) String() (string, error) {
 
 func (t *VariableNode) isSet() bool {
 	return t.Env.Has(t.Ident)
+}
+
+func (t *VariableNode) makeVar() string {
+	return fmt.Sprintf(varFormat, t.Ident)
 }
 
 func (t *VariableNode) validateNoUnset() error {
@@ -88,7 +97,7 @@ func (t *SubstitutionNode) String() (string, error) {
 	if t.ExpType >= itemPlus && t.Default != nil {
 		switch t.ExpType {
 		case itemColonDash, itemColonEquals:
-			if s, _ := t.Variable.String(); s != "" {
+			if s, _ := t.Variable.String(); s != "" && !t.Variable.Restrict.NoFail {
 				return s, nil
 			}
 			return t.Default.String()

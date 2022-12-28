@@ -20,14 +20,16 @@ type Restrictions struct {
 	NoUnset bool
 	NoEmpty bool
 	NoDigit bool
+	NoFail  bool
 }
 
 // Restrictions specifier
 var (
-	Relaxed = &Restrictions{false, false, false}
-	NoEmpty = &Restrictions{false, true, false}
-	NoUnset = &Restrictions{true, false, false}
-	Strict  = &Restrictions{true, true, false}
+	Relaxed = &Restrictions{false, false, false, false}
+	NoEmpty = &Restrictions{false, true, false, false}
+	NoUnset = &Restrictions{true, false, false, false}
+	Strict  = &Restrictions{true, true, false, false}
+	NoFail  = &Restrictions{false, false, false, true}
 )
 
 // Parser type initializer

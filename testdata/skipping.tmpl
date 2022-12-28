@@ -1,0 +1,5 @@
+foo: $BAR
+baz: ${FOO:=baz}
+env: ${ENV:-dev}
+host: ${BAR:+localhost}
+not: $NOTSET
